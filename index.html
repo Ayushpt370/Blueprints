@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blueprints – To-Do</title>
+  <style>
+    :root { --bg:#f4f6fb; --card:#fff; --text:#1f2937; --muted:#6b7280; --accent:#4f46e5; --border:#e5e7eb; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#111827; --card:#1f2937; --text:#f3f4f6; --muted:#9ca3af; --border:#374151; }
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+      background:var(--bg); color:var(--text); font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+    .card { background:var(--card); width:min(420px,92vw); padding:28px; border-radius:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.1); }
+    h1 { margin:0; }
+    .sub { color:var(--muted); margin:4px 0 16px; font-size:.9rem; }
+    form { display:flex; gap:8px; }
+    input[type=text] { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:8px;
+      background:transparent; color:inherit; font-size:1rem; }
+    button { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 16px; cursor:pointer; font-size:1rem; }
+    button:hover { opacity:.9; }
+    ul { list-style:none; padding:0; margin:16px 0 8px; }
+    li { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+    li span { flex:1; }
+    li.done span { text-decoration:line-through; color:var(--muted); }
+    li .del { background:transparent; color:var(--muted); padding:2px 8px; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Blueprints</h1>
+    <p class="sub">A simple to-do app</p>
+    <form id="todo-form">
+      <input id="todo-input" type="text" placeholder="Add a task..." autocomplete="off" required />
+      <button type="submit">Add</button>
+    </form>
+    <ul id="todo-list"></ul>
+    <p id="count" class="sub"></p>
+  </main>
+
+  <script>
+    const form = document.getElementById("todo-form");
+    const input = document.getElementById("todo-input");
+    const list = document.getElementById("todo-list");
+    const count = document.getElementById("count");
+
+    let todos = [];
+    try { todos = JSON.parse(localStorage.getItem("todos")) || []; } catch { todos = []; }
+
+    function save() {
+      try { localStorage.setItem("todos", JSON.stringify(todos)); } catch {}
+    }
+
+    function render() {
+      list.innerHTML = "";
+      todos.forEach((t, i) => {
+        const li = document.createElement("li");
+        if (t.done) li.className = "done";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = t.done;
+        cb.onchange = () => { t.done = cb.checked; save(); render(); };
+
+        const span = document.createElement("span");
+        span.textContent = t.text;
+
+        const del = document.createElement("button");
+        del.className = "del";
+        del.textContent = "✕";
+        del.setAttribute("aria-label", "Delete task");
+        del.onclick = () => { todos.splice(i, 1); save(); render(); };
+
+        li.append(cb, span, del);
+        list.appendChild(li);
+      });
+      const left = todos.filter(t => !t.done).length;
+      count.textContent = todos.length ? `${left} task${left === 1 ? "" : "s"} left` : "No tasks yet.";
+    }
+
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      todos.push({ text, done: false });
+      input.value = "";
+      save();
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
